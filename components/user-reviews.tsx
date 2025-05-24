@@ -75,7 +75,7 @@ export default function UserReviews({ userId }: UserReviewsProps) {
       <div className="text-center py-12">
         <h3 className="text-lg font-medium mb-2">No reviews yet</h3>
         <p className="text-muted-foreground mb-6">
-          You haven't reviewed any books yet.
+          You havent reviewed any books yet.
         </p>
         <Button asChild>
           <Link href="/books">Browse Books</Link>

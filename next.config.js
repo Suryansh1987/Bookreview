@@ -1,10 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  //output: 'export',
-  eslint: {
-    ignoreDuringBuilds: true,
+  // Disable tracing to avoid permission issues
+  experimental: {
+    instrumentationHook: false,
   },
-  images: { unoptimized: true },
-};
+  // Alternative way to disable tracing
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals.push({
+        '@opentelemetry/api': 'commonjs @opentelemetry/api',
+      })
+    }
+    return config
+  },
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

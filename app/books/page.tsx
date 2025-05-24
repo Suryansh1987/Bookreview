@@ -47,38 +47,37 @@ export default function BooksPage() {
     setGenreInput(genreFilter);
   }, [searchQuery, genreFilter]);
 
-  // Fetch books based on filters and page
-  useEffect(() => {
-    const fetchBooks = async () => {
-      setLoading(true);
-      try {
-        const queryParams = new URLSearchParams();
-        if (searchQuery) queryParams.append('search', searchQuery);
-        if (genreFilter && genreFilter !== 'all') queryParams.append('genre', genreFilter);
-        queryParams.append('page', currentPage.toString());
-        queryParams.append('limit', '10');
+useEffect(() => {
+  const fetchBooks = async () => {
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+      if (searchQuery) queryParams.append('search', searchQuery);
+      if (genreFilter && genreFilter !== 'all') queryParams.append('genre', genreFilter);
+      queryParams.append('page', currentPage.toString());
+      queryParams.append('limit', '10');
 
-        const response = await fetch(`/api/books?${queryParams.toString()}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch books');
-        }
-        const data = await response.json();
-        setBooks(data.books);
-        setPagination(data.pagination);
-      } catch (error) {
-        console.error('Error fetching books:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load books. Please try again later.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
+      const response = await fetch(`/api/books?${queryParams.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch books');
       }
-    };
+      const data = await response.json();
+      setBooks(data.books);
+      setPagination(data.pagination);
+    } catch (error) {
+      console.error('Error fetching books:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load books. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchBooks();
-  }, [searchQuery, genreFilter, currentPage]);
+  fetchBooks();
+}, [searchQuery, genreFilter, currentPage, toast]);
 
   // Handle search submit with proper typing
   const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {

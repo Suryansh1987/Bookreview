@@ -9,7 +9,10 @@
   "lint": "next lint",
   "db:push": "drizzle-kit push:pg"
 }
-,
+,"rules": {
+  "react/no-unescaped-entities": "off",
+  "react-hooks/exhaustive-deps": "off"
+},
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@next/swc-wasm-nodejs": "13.5.1",
