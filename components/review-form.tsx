@@ -40,81 +40,90 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
     },
   });
 
-  const onSubmit = async (data: z.infer<typeof reviewSchema>) => {
-    try {
-      setIsSubmitting(true);
+ const onSubmit = async (data: z.infer<typeof reviewSchema>) => {
+  try {
+    setIsSubmitting(true);
 
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to submit a review",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          bookId,
-          rating: data.rating,
-          comment: data.comment,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to submit review");
-      }
-
-      const reviewData = await response.json();
-
-      // Add user information to the review data
-      const userResponse = await fetch("/api/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        reviewData.user = {
-          id: userData.id,
-          name: userData.name,
-          avatar: userData.avatar,
-        };
-      }
-
-      onReviewSubmitted(reviewData);
-
-      // Reset form
-      form.reset({
-        rating: 0,
-        comment: "",
-      });
-    } catch (error: unknown) {
-      console.error("Error submitting review:", error);
-
-      const message =
-        error instanceof Error
-          ? error.message
-          : "An error occurred while submitting your review";
-
+    const token = localStorage.getItem("token");
+    if (!token) {
       toast({
-        title: "Error",
-        description: message,
+        title: "Authentication required",
+        description: "Please log in to submit a review",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+      return;
     }
-  };
+
+    // Get user ID first
+    const userResponse = await fetch("/api/auth/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!userResponse.ok) {
+      toast({
+        title: "Error",
+        description: "Failed to get user info",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const userData = await userResponse.json();
+
+    // Use userData.id to send review to the right route
+    const response = await fetch(`/api/users/${userData.id}/reviews`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        bookId,
+        rating: data.rating,
+        comment: data.comment,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to submit review");
+    }
+
+    const reviewData = await response.json();
+
+    // Attach user info if needed
+    reviewData.user = {
+      id: userData.id,
+      name: userData.name,
+      avatar: userData.avatar,
+    };
+
+    onReviewSubmitted(reviewData);
+
+    form.reset({
+      rating: 0,
+      comment: "",
+    });
+  } catch (error: unknown) {
+    console.error("Error submitting review:", error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "An error occurred while submitting your review";
+
+    toast({
+      title: "Error",
+      description: message,
+      variant: "destructive",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <Form {...form}>

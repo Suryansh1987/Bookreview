@@ -1,14 +1,15 @@
 import { getAllBooks, getBookById } from '@/lib/book';
 import ReviewSection from './ReviewSection';
-import type { Review } from '../../../lib/book';
+
 interface BookPageProps {
   params: { id: string };
 }
 
 export async function generateStaticParams() {
   const books = await getAllBooks();
+
   return books.map((book) => ({
-    id: book.id,
+    id: book.id.toString(), // ensure it's a string
   }));
 }
 
@@ -20,12 +21,11 @@ export default async function BookPage({ params }: BookPageProps) {
   }
 
   return (
-    <main>
-      <h1>{book.title}</h1>
-      <p>{book.description}</p>
+    <main className="max-w-3xl mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
+      <p className="text-gray-700 mb-6">{book.description}</p>
 
-      {/* Client-side review section */}
-      <ReviewSection bookId={book.id} reviews={book.reviews} />
+      <ReviewSection bookId={book.id.toString()} reviews={book.reviews ?? []} />
     </main>
   );
 }

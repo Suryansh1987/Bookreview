@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import ReviewForm from '../../../components/review-form';  // Adjust path if needed
+
 interface Review {
   id: string;
-  content: string;
+  content?: string;
   rating: number;
-  author: string;
+  author?: string;  // Or user object if you have user info
 }
 
 interface ReviewSectionProps {
@@ -16,7 +18,8 @@ interface ReviewSectionProps {
 export default function ReviewSection({ bookId, reviews }: ReviewSectionProps) {
   const [localReviews, setLocalReviews] = useState(reviews);
 
-  function onReviewSubmitted(newReview: Review) {
+  function onReviewSubmitted(newReview: any) {
+    // Adapt this if your review shape is different
     setLocalReviews((prev) => [newReview, ...prev]);
   }
 
@@ -26,40 +29,13 @@ export default function ReviewSection({ bookId, reviews }: ReviewSectionProps) {
       <ul>
         {localReviews.map((review) => (
           <li key={review.id}>
-            <strong>{review.author}:</strong> {review.content} (Rating: {review.rating})
+            <strong>{review.author ?? review.user?.name ?? 'Anonymous'}:</strong>{' '}
+            {review.content ?? review.comment} (Rating: {review.rating})
           </li>
         ))}
       </ul>
 
       <ReviewForm bookId={bookId} onReviewSubmitted={onReviewSubmitted} />
     </section>
-  );
-}
-
-interface ReviewFormProps {
-  bookId: string;
-  onReviewSubmitted: (review: Review) => void;
-}
-
-function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProps) {
-  // For demo, no real input, just a button to add a dummy review
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const newReview: Review = {
-      id: Math.random().toString(36).substring(2, 9),
-      content: 'This is a new review!',
-      rating: 4,
-      author: 'New User',
-    };
-
-    onReviewSubmitted(newReview);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <button type="submit">Add Review</button>
-    </form>
   );
 }

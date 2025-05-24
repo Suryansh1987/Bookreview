@@ -1,34 +1,42 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../../db/db';
-import { reviews, books } from '../../../db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { reviews } from '../../../db/schema';
+import { verifyToken } from '../../../../../lib/auth'; // Your JWT token verification function
 
-// GET /api/users/:id/reviews
-export async function GET(request, { params }) {
+export async function POST(request) {
   try {
-    const { id } = params;
+    // Get and verify token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+    const token = authHeader.split(' ')[1];
+    const user = verifyToken(token); // returns user object or null if invalid
+    if (!user) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
 
-    const userReviews = await db.select()
-      .from(reviews)
-      .leftJoin(books, eq(reviews.bookId, books.id))
-      .where(eq(reviews.userId, id))
-      .orderBy(desc(reviews.createdAt));
+    // Parse request body JSON
+    const { bookId, rating, comment } = await request.json();
 
-    const formattedReviews = userReviews.map(review => ({
-      id: review.reviews.id,
-      rating: review.reviews.rating,
-      comment: review.reviews.comment,
-      createdAt: review.reviews.createdAt,
-      book: {
-        id: review.books.id,
-        title: review.books.title,
-        coverImage: review.books.coverImage
-      }
-    }));
+    // Validate required fields manually if you want or rely on client validation
+    if (!bookId || !rating || rating < 1 || rating > 5) {
+      return NextResponse.json({ message: 'Invalid data' }, { status: 400 });
+    }
 
-    return NextResponse.json(formattedReviews);
+    // Insert review in DB
+    const [insertedReview] = await db.insert(reviews).values({
+      bookId,
+      userId: user.id,
+      rating,
+      comment: comment || '',
+      createdAt: new Date(),
+    }).returning();
+
+    // Return inserted review JSON
+    return NextResponse.json(insertedReview);
   } catch (error) {
-    console.error('Error fetching user reviews:', error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+    console.error('Error submitting review:', error);
+    return NextResponse.json({ message: 'Failed to submit review' }, { status: 500 });
   }
 }
