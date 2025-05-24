@@ -63,4 +63,4 @@ Open your browser and visit http://localhost:3000.
 
 Live Demo
 The application is deployed and accessible here:
-https://your-deployment-url.com
+https://bookreview-alpha.vercel.app
