@@ -3,11 +3,19 @@
 import { useState } from 'react';
 import ReviewForm from '../../../components/review-form';  // Adjust path if needed
 
+interface User {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
 interface Review {
   id: string;
   content?: string;
+  comment?: string;
   rating: number;
-  author?: string;  // Or user object if you have user info
+  author?: string;
+  user?: User;
 }
 
 interface ReviewSectionProps {
@@ -18,8 +26,7 @@ interface ReviewSectionProps {
 export default function ReviewSection({ bookId, reviews }: ReviewSectionProps) {
   const [localReviews, setLocalReviews] = useState(reviews);
 
-  function onReviewSubmitted(newReview: any) {
-    // Adapt this if your review shape is different
+  function onReviewSubmitted(newReview: Review) {
     setLocalReviews((prev) => [newReview, ...prev]);
   }
 
