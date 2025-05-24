@@ -10,10 +10,10 @@ const handle = app.getRequestHandler();
 const PORT = process.env.PORT || 3000;
 
 // Import API routes
-const booksRoutes = require('./api/routes/books');
-const reviewsRoutes = require('./api/routes/reviews');
-const usersRoutes = require('./api/routes/users');
-const authRoutes = require('./api/routes/auth');
+const booksRoutes = require('./app/api/routes/books');
+const reviewsRoutes = require('./app/api/routes/reviews');
+const usersRoutes = require('./app/api/routes/users');
+const authRoutes = require('./app/api/routes/auth');
 
 app.prepare().then(() => {
   const server = express();
