@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+import { NextResponse } from 'next/server';
 const { body, validationResult } = require('express-validator');
 const { db } = require('../db/db');
 const { users } = require('../db/schema');

@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-
+import { NextResponse } from 'next/server';
 // Authenticate user
 const authMiddleware = (req, res, next) => {
   try {
