@@ -35,7 +35,7 @@ export async function GET(request) {
     if (genre) conditions.push(eq(books.genre, genre));
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Parallel queries for books and total count
+    
     const [booksResult, totalCountResult] = await Promise.all([
       db.select()
         .from(books)
@@ -52,7 +52,7 @@ export async function GET(request) {
 
     const totalCount = parseInt(totalCountResult[0]?.count || '0', 10);
 
-    // Get ratings for each book
+ 
     const bookIds = booksResult.map(book => book.books.id);
     let ratingsMap = {};
 
@@ -75,7 +75,7 @@ export async function GET(request) {
       }, {});
     }
 
-    // Format books for response
+   
     const formattedBooks = booksResult.map(book => ({
       id: book.books.id,
       title: book.books.title,
@@ -106,11 +106,11 @@ export async function GET(request) {
   }
 }
 
-// POST /api/books - add new book (admin only)
+
 export async function POST(request) {
   try {
-    // Run auth & admin checks (adjust your authMiddleware accordingly)
-    const { authMiddleware } = await import('../middleware/auth'); // dynamic import if needed
+    
+    const { authMiddleware } = await import('../middleware/auth'); 
     const user = await authMiddleware(request);
     if (!user || !user.isAdmin) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
@@ -118,7 +118,6 @@ export async function POST(request) {
 
     const body = await request.json();
 
-    // Basic validation
     if (!body.title) return NextResponse.json({ message: 'Title is required' }, { status: 400 });
     if (!body.description) return NextResponse.json({ message: 'Description is required' }, { status: 400 });
     if (body.coverImage && !isValidUrl(body.coverImage))
@@ -130,7 +129,6 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Page count must be a positive integer' }, { status: 400 });
     if (!body.authorId) return NextResponse.json({ message: 'Author ID is required' }, { status: 400 });
 
-    // Check author exists
     const authorExists = await db.select()
       .from(authors)
       .where(eq(authors.id, body.authorId))
@@ -140,7 +138,7 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Author not found' }, { status: 404 });
     }
 
-    // Insert new book
+
     const [newBook] = await db.insert(books)
       .values({
         title: body.title,

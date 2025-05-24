@@ -1,8 +1,8 @@
-// lib/db/schema.js
+
 const { pgTable, text, timestamp, integer, boolean, uuid, varchar } = require('drizzle-orm/pg-core');
 const { relations } = require('drizzle-orm');
 
-// Users table
+
 const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
@@ -15,7 +15,6 @@ const users = pgTable('users', {
   updatedAt: timestamp('updated_at')
 });
 
-// Authors table
 const authors = pgTable('authors', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
@@ -25,7 +24,7 @@ const authors = pgTable('authors', {
   updatedAt: timestamp('updated_at')
 });
 
-// Books table
+
 const books = pgTable('books', {
   id: uuid('id').defaultRandom().primaryKey(),
   title: text('title').notNull(),
@@ -40,7 +39,7 @@ const books = pgTable('books', {
   updatedAt: timestamp('updated_at')
 });
 
-// Reviews table
+
 const reviews = pgTable('reviews', {
   id: uuid('id').defaultRandom().primaryKey(),
   bookId: uuid('book_id').references(() => books.id).notNull(),
@@ -51,7 +50,7 @@ const reviews = pgTable('reviews', {
   updatedAt: timestamp('updated_at')
 });
 
-// Relations
+
 const usersRelations = relations(users, ({ many }) => ({
   reviews: many(reviews)
 }));
@@ -79,7 +78,7 @@ const reviewsRelations = relations(reviews, ({ one }) => ({
   })
 }));
 
-// Export using CommonJS
+
 module.exports = {
   users,
   authors,

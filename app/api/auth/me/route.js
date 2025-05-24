@@ -10,7 +10,7 @@ export async function GET(req) {
     const authHeader = req.headers.get('authorization');
     if (!authHeader) return NextResponse.json({ error: 'No token provided' }, { status: 401 });
 
-    const token = authHeader.split(' ')[1]; // Expect Bearer token
+    const token = authHeader.split(' ')[1];
     if (!token) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
 
     let decoded;

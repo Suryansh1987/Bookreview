@@ -1,25 +1,22 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../db/db'; // adjust import paths
+import { db } from '../../db/db'; 
 import { users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 
-// Since Next.js API routes don't have express req/res,
-// we manually parse JSON and validate fields.
-
 export async function POST(req) {
   try {
     const json = await req.json();
     const { name, email, password } = json;
 
-    // Simple validation (you can add more robust validation)
+ 
     if (!name) return NextResponse.json({ error: 'Name required' }, { status: 400 });
     if (!email || !email.includes('@')) return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
     if (!password || password.length < 6) return NextResponse.json({ error: 'Password min 6 chars' }, { status: 400 });
 
-    // Check if user exists
+
     const existingUser = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
 
     if (existingUser.length) {

@@ -1,19 +1,18 @@
 const jwt = require('jsonwebtoken');
 import { NextResponse } from 'next/server';
-// Authenticate user
+
 const authMiddleware = (req, res, next) => {
   try {
-    // Get token from header
+
     const token = req.header('Authorization')?.split(' ')[1];
     
     if (!token) {
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
-    
-    // Verify token
+  
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Add user to request
+  
     req.user = decoded;
     
     next();
@@ -23,7 +22,7 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Check if user is admin
+
 const adminMiddleware = (req, res, next) => {
   if (!req.user.isAdmin) {
     return res.status(403).json({ message: 'Access denied: Admin only' });

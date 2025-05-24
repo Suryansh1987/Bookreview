@@ -59,7 +59,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// PUT /api/users/:id
+
 export async function PUT(request, { params }) {
   try {
     let user;
