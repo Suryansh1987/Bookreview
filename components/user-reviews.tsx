@@ -11,45 +11,57 @@ import StarRating from "@/components/star-rating";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+interface Review {
+  id: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  book: {
+    id: string;
+    title: string;
+    coverImage?: string;
+  };
+}
+
 interface UserReviewsProps {
   userId: string;
 }
 
 export default function UserReviews({ userId }: UserReviewsProps) {
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState<Review[]>([]);  // <-- Specify type here
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  
+
   useEffect(() => {
     const fetchUserReviews = async () => {
       try {
         setLoading(true);
-        
+
         const response = await fetch(`/api/users/${userId}/reviews`);
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch user reviews');
+          throw new Error("Failed to fetch user reviews");
         }
-        
-        const data = await response.json();
+
+        const data: Review[] = await response.json();  // you can type here too
         setReviews(data);
       } catch (error) {
-        console.error('Error fetching user reviews:', error);
+        console.error("Error fetching user reviews:", error);
         toast({
-          title: 'Error',
-          description: 'Failed to load reviews. Please try again later.',
-          variant: 'destructive',
+          title: "Error",
+          description: "Failed to load reviews. Please try again later.",
+          variant: "destructive",
         });
       } finally {
         setLoading(false);
       }
     };
-    
+
     if (userId) {
       fetchUserReviews();
     }
   }, [userId, toast]);
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -57,7 +69,7 @@ export default function UserReviews({ userId }: UserReviewsProps) {
       </div>
     );
   }
-  
+
   if (!reviews.length) {
     return (
       <div className="text-center py-12">
@@ -71,7 +83,7 @@ export default function UserReviews({ userId }: UserReviewsProps) {
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       {reviews.map((review, index) => (
@@ -97,21 +109,26 @@ export default function UserReviews({ userId }: UserReviewsProps) {
                     </div>
                   </Link>
                 </div>
-                
+
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div>
-                      <Link href={`/books/${review.book.id}`} className="hover:underline">
-                        <h3 className="font-semibold text-lg">{review.book.title}</h3>
+                      <Link
+                        href={`/books/${review.book.id}`}
+                        className="hover:underline"
+                      >
+                        <h3 className="font-semibold text-lg">
+                          {review.book.title}
+                        </h3>
                       </Link>
                       <div className="flex items-center gap-2 mt-1">
                         <StarRating rating={review.rating} size="sm" />
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                          {format(new Date(review.createdAt), "MMM d, yyyy")}
                         </span>
                       </div>
                     </div>
-                    
+
                     <Button
                       asChild
                       variant="outline"
@@ -121,7 +138,7 @@ export default function UserReviews({ userId }: UserReviewsProps) {
                       <Link href={`/books/${review.book.id}`}>View Book</Link>
                     </Button>
                   </div>
-                  
+
                   {review.comment && (
                     <p className="text-muted-foreground mt-4">{review.comment}</p>
                   )}
@@ -129,7 +146,7 @@ export default function UserReviews({ userId }: UserReviewsProps) {
               </div>
             </CardContent>
           </Card>
-          
+
           {index < reviews.length - 1 && <Separator className="my-6" />}
         </div>
       ))}

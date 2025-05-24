@@ -31,7 +31,7 @@ interface ReviewFormProps {
 export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  
+
   const form = useForm<z.infer<typeof reviewSchema>>({
     resolver: zodResolver(reviewSchema),
     defaultValues: {
@@ -39,13 +39,13 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
       comment: "",
     },
   });
-  
+
   const onSubmit = async (data: z.infer<typeof reviewSchema>) => {
     try {
       setIsSubmitting(true);
-      
-      const token = localStorage.getItem('token');
-      
+
+      const token = localStorage.getItem("token");
+
       if (!token) {
         toast({
           title: "Authentication required",
@@ -54,12 +54,12 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
         });
         return;
       }
-      
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
+
+      const response = await fetch("/api/reviews", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           bookId,
@@ -67,21 +67,21 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
           comment: data.comment,
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit review');
+        throw new Error(errorData.message || "Failed to submit review");
       }
-      
+
       const reviewData = await response.json();
-      
+
       // Add user information to the review data
-      const userResponse = await fetch('/api/auth/me', {
+      const userResponse = await fetch("/api/auth/me", {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (userResponse.ok) {
         const userData = await userResponse.json();
         reviewData.user = {
@@ -90,27 +90,32 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
           avatar: userData.avatar,
         };
       }
-      
+
       onReviewSubmitted(reviewData);
-      
+
       // Reset form
       form.reset({
         rating: 0,
-        comment: '',
+        comment: "",
       });
-      
-    } catch (error) {
-      console.error('Error submitting review:', error);
+    } catch (error: unknown) {
+      console.error("Error submitting review:", error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An error occurred while submitting your review";
+
       toast({
         title: "Error",
-        description: error.message || 'An error occurred while submitting your review',
+        description: message,
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -121,8 +126,8 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
             <FormItem>
               <FormLabel>Rating</FormLabel>
               <FormControl>
-                <StarRating 
-                  rating={field.value} 
+                <StarRating
+                  rating={field.value}
                   onChange={(rating) => field.onChange(rating)}
                   size="lg"
                 />
@@ -131,7 +136,7 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="comment"
@@ -149,7 +154,7 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
             </FormItem>
           )}
         />
-        
+
         <Button type="submit" disabled={isSubmitting || form.getValues().rating === 0}>
           {isSubmitting ? (
             <>
@@ -157,7 +162,7 @@ export default function ReviewForm({ bookId, onReviewSubmitted }: ReviewFormProp
               Submitting...
             </>
           ) : (
-            'Submit Review'
+            "Submit Review"
           )}
         </Button>
       </form>

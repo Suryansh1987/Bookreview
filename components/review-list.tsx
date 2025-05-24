@@ -29,17 +29,17 @@ export default function ReviewList({ reviews }: ReviewListProps) {
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
-      {reviews.map((review, index) => (
+      {reviews.map((review: Review, index: number) => (
         <div key={review.id}>
           <div className="flex gap-4">
             <Avatar>
               <AvatarImage src={review.user.avatar} />
               <AvatarFallback>{review.user.name.charAt(0)}</AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
                 <div>
@@ -47,18 +47,18 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                   <div className="flex items-center gap-2">
                     <StarRating rating={review.rating} size="sm" />
                     <span className="text-xs text-muted-foreground">
-                      {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                      {format(new Date(review.createdAt), "MMM d, yyyy")}
                     </span>
                   </div>
                 </div>
               </div>
-              
+
               {review.comment && (
                 <p className="text-muted-foreground mt-2">{review.comment}</p>
               )}
             </div>
           </div>
-          
+
           {index < reviews.length - 1 && <Separator className="my-6" />}
         </div>
       ))}

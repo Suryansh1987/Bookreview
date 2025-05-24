@@ -25,6 +25,8 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
 });
 
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login, isAuthenticated } = useAuth();
@@ -32,34 +34,33 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/';
   const { toast } = useToast();
-  
-  // Redirect if already authenticated
+
   useEffect(() => {
     if (isAuthenticated) {
       router.push(redirectPath);
     }
   }, [isAuthenticated, redirectPath, router]);
-  
-  const form = useForm({
+
+  const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
     },
   });
-  
-  const onSubmit = async (data) => {
+
+  const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsLoading(true);
       await login(data.email, data.password);
-      
+
       toast({
         title: 'Login successful',
         description: 'Welcome back!',
       });
-      
+
       router.push(redirectPath);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Login failed',
         description: error.message,
@@ -69,7 +70,7 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="container mx-auto px-4 py-16 flex justify-center">
       <div className="w-full max-w-md space-y-8">
@@ -77,7 +78,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold">Welcome Back</h1>
           <p className="text-muted-foreground mt-2">Log in to access your account</p>
         </div>
-        
+
         <div className="bg-card rounded-lg p-8 shadow-sm border">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -94,7 +95,7 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="password"
@@ -108,7 +109,7 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              
+
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -121,7 +122,7 @@ export default function LoginPage() {
               </Button>
             </form>
           </Form>
-          
+
           <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
               Don't have an account?{' '}

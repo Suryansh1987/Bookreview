@@ -1,69 +1,86 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { Loader2, PencilLine } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/context/auth-context';
-import { format } from 'date-fns';
-import ProfileForm from '@/components/profile-form';
-import UserReviews from '@/components/user-reviews';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Loader2, PencilLine } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/auth-context";
+import { format } from "date-fns";
+import ProfileForm from "@/components/profile-form";
+import UserReviews from "@/components/user-reviews";
+
+// Define the profile update data shape
+interface ProfileUpdateData {
+  name?: string;
+  bio?: string;
+  email?: string;
+  avatar?: string;
+  // Add other fields if needed
+}
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const { user, isAuthenticated, isLoading, fetchUser } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  
-  // Redirect to login if not authenticated
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/auth/login?redirect=/profile');
+      router.push("/auth/login?redirect=/profile");
     }
   }, [isAuthenticated, isLoading, router]);
-  
-  const handleProfileUpdate = async (updatedData) => {
+
+  const handleProfileUpdate = async (updatedData: ProfileUpdateData) => {
+    if (!user) return;
+
     try {
       setLoading(true);
-      
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(updatedData)
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("User token is missing. Please login again.");
       }
-      
-      // Refresh user data
+
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData?.message || "Failed to update profile. Please try again.";
+        throw new Error(errorMessage);
+      }
+
       await fetchUser();
-      
+
       setIsEditing(false);
       toast({
-        title: 'Profile updated',
-        description: 'Your profile has been successfully updated.',
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "An unknown error occurred.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
-  
+
   if (isLoading || !user) {
     return (
       <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[400px]">
@@ -71,46 +88,49 @@ export default function ProfilePage() {
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-8">
           <Avatar className="w-24 h-24">
             <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="text-xl">{user.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback className="text-xl">
+              {user.name?.charAt(0).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1">
             <h1 className="text-3xl font-bold">{user.name}</h1>
             <p className="text-muted-foreground">
-              Joined {format(new Date(user.createdAt), 'MMMM yyyy')}
+              Joined {format(new Date(user.createdAt), "MMMM yyyy")}
             </p>
           </div>
-          
-          <Button 
-            variant="outline" 
+
+          <Button
+            variant="outline"
             className="gap-2"
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => setIsEditing((prev) => !prev)}
+            disabled={loading}
           >
             <PencilLine className="h-4 w-4" />
-            {isEditing ? 'Cancel' : 'Edit Profile'}
+            {isEditing ? "Cancel" : "Edit Profile"}
           </Button>
         </div>
-        
+
         <Separator className="mb-8" />
-        
+
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="profile" className="space-y-6">
             {isEditing ? (
-              <ProfileForm 
-                user={user} 
-                onSubmit={handleProfileUpdate} 
+              <ProfileForm
+                user={user}
+                onSubmit={handleProfileUpdate}
                 isLoading={loading}
                 onCancel={() => setIsEditing(false)}
               />
@@ -119,15 +139,15 @@ export default function ProfilePage() {
                 <div className="grid gap-2">
                   <h3 className="text-lg font-semibold">About</h3>
                   <p className="text-muted-foreground">
-                    {user.bio || 'No bio provided yet.'}
+                    {user.bio || "No bio provided yet."}
                   </p>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <h3 className="text-lg font-semibold">Email</h3>
                   <p className="text-muted-foreground">{user.email}</p>
                 </div>
-                
+
                 {user.isAdmin && (
                   <div className="grid gap-2">
                     <h3 className="text-lg font-semibold">Role</h3>
@@ -137,7 +157,7 @@ export default function ProfilePage() {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="reviews">
             <UserReviews userId={user.id} />
           </TabsContent>

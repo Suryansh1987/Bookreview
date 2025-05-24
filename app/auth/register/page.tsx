@@ -20,30 +20,33 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { Loader2 } from 'lucide-react';
 
-const registerSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+    email: z.string().email({ message: 'Please enter a valid email address' }),
+    password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { register, isAuthenticated } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  
-  // Redirect if already authenticated
+
   useEffect(() => {
     if (isAuthenticated) {
       router.push('/');
     }
   }, [isAuthenticated, router]);
-  
-  const form = useForm({
+
+  const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: '',
@@ -52,29 +55,29 @@ export default function RegisterPage() {
       confirmPassword: '',
     },
   });
-  
-  const onSubmit = async (data) => {
+
+  const onSubmit = async (data: RegisterFormValues) => {
     try {
       setIsLoading(true);
       await register(data.name, data.email, data.password);
-      
+
       toast({
         title: 'Registration successful',
         description: 'Your account has been created. Welcome to BookWorm!',
       });
-      
+
       router.push('/');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Registration failed',
-        description: error.message,
+        description: error.message || 'An error occurred during registration.',
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="container mx-auto px-4 py-16 flex justify-center">
       <div className="w-full max-w-md space-y-8">
@@ -82,7 +85,7 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-bold">Create an Account</h1>
           <p className="text-muted-foreground mt-2">Join our community of book lovers</p>
         </div>
-        
+
         <div className="bg-card rounded-lg p-8 shadow-sm border">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -99,7 +102,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="email"
@@ -113,7 +116,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="password"
@@ -127,7 +130,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="confirmPassword"
@@ -141,7 +144,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              
+
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -154,7 +157,7 @@ export default function RegisterPage() {
               </Button>
             </form>
           </Form>
-          
+
           <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
               Already have an account?{' '}
