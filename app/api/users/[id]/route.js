@@ -1,0 +1,176 @@
+import { NextResponse } from 'next/server';
+import { db } from '../../db/db';
+import { users, reviews, books } from '../../db/schema';
+import { eq } from 'drizzle-orm';
+import bcrypt from 'bcryptjs';
+import { desc } from 'drizzle-orm';
+
+// Dummy auth middleware replacement for example
+// You should replace this with your real auth logic
+async function authMiddleware(request) {
+  // Example: extract token from headers, verify, return user or throw error
+  const token = request.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) throw new Error('Unauthorized');
+
+  // Suppose you verify token here and get user id
+  // For demo, let's return a dummy user
+  return { id: 'user-id-from-token' };
+}
+
+// Simple manual validation helpers
+function validateUpdateData(data) {
+  const errors = [];
+  if (data.name !== undefined) {
+    if (typeof data.name !== 'string' || data.name.trim().length < 2) {
+      errors.push({ field: 'name', message: 'Name must be at least 2 characters' });
+    }
+  }
+  if (data.avatar !== undefined) {
+    try {
+      new URL(data.avatar);
+    } catch {
+      errors.push({ field: 'avatar', message: 'Avatar must be a valid URL' });
+    }
+  }
+  if (data.newPassword !== undefined && typeof data.newPassword === 'string' && data.newPassword.length < 6) {
+    errors.push({ field: 'newPassword', message: 'Password must be at least 6 characters' });
+  }
+  return errors;
+}
+
+// GET /api/users/:id
+export async function GET(request, { params }) {
+  try {
+    const { id } = params;
+
+    const userResult = await db.select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      bio: users.bio,
+      avatar: users.avatar,
+      createdAt: users.createdAt
+    })
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    if (!userResult.length) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(userResult[0]);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+  }
+}
+
+// PUT /api/users/:id
+export async function PUT(request, { params }) {
+  try {
+    // Auth check
+    let user;
+    try {
+      user = await authMiddleware(request);
+    } catch (e) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = params;
+
+    if (id !== user.id) {
+      return NextResponse.json({ message: 'You can only update your own profile' }, { status: 403 });
+    }
+
+    const body = await request.json();
+
+    // Validate body manually
+    const errors = validateUpdateData(body);
+    if (errors.length > 0) {
+      return NextResponse.json({ errors }, { status: 400 });
+    }
+
+    const { name, bio, avatar, currentPassword, newPassword } = body;
+
+    // Fetch current user from DB
+    const userResult = await db.select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    if (!userResult.length) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    const currentUser = userResult[0];
+    const updateData = {};
+
+    if (name !== undefined) updateData.name = name;
+    if (bio !== undefined) updateData.bio = bio;
+    if (avatar !== undefined) updateData.avatar = avatar;
+
+    // Password change logic
+    if (currentPassword && newPassword) {
+      const passwordValid = await bcrypt.compare(currentPassword, currentUser.password);
+      if (!passwordValid) {
+        return NextResponse.json({ message: 'Current password is incorrect' }, { status: 400 });
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      updateData.password = hashedPassword;
+    } else if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
+      return NextResponse.json({ message: 'Both current password and new password are required to update password' }, { status: 400 });
+    }
+
+    const updatedUser = await db.update(users)
+      .set({
+        ...updateData,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        bio: users.bio,
+        avatar: users.avatar,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      });
+
+    return NextResponse.json(updatedUser[0]);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+  }
+}
+
+// GET /api/users/:id/reviews
+export async function GET_reviews(request, { params }) {
+  try {
+    const { id } = params;
+
+    const userReviews = await db.select()
+      .from(reviews)
+      .leftJoin(books, eq(reviews.bookId, books.id))
+      .where(eq(reviews.userId, id))
+      .orderBy(desc(reviews.createdAt));
+
+    const formattedReviews = userReviews.map(review => ({
+      id: review.reviews.id,
+      rating: review.reviews.rating,
+      comment: review.reviews.comment,
+      createdAt: review.reviews.createdAt,
+      book: {
+        id: review.books.id,
+        title: review.books.title,
+        coverImage: review.books.coverImage
+      }
+    }));
+
+    return NextResponse.json(formattedReviews);
+  } catch (error) {
+    console.error('Error fetching user reviews:', error);
+    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+  }
+}
